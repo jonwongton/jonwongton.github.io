@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<script type="text/javascript" src="d3.min.js"></script>
+<style>
+    * {
+      font-family: sans-serif;
+    }
+circle {
+	fill: lightblue;
+	stroke: black;
+} 
+td, th {
+    padding: 1px 4px;
+    border: 1px black solid;
+}
+#tooltip {
+    opacity: 0;
+    position: absolute;
+    text-align: center;
+    width: 100px; height: 100px;
+    background: white;
+    border: 0px;
+}
+</style>
+<body>
+<h1>Is there a correlation between the number of engine cylinders and the average miles per gallon (MPG)?</h1>
+<p>For various makes of cars, here is a table of the number of engine cylinders and their corresponding MPG:</p>
+<svg width="650" height="4400"></svg>
+<div id="tooltip"></div>
+<script>
+async function table1() {
+  const data = await d3.csv("https://flunky.github.io/cars2017.csv");
+
+  var table = d3.select("svg").append("foreignObject")
+    .attr("width", 650)
+    .attr("height", 3400)
+    .append("xhtml:body")
+
+  //var table = d3.select("body").append("table")
+  var thead = table.append("thead")
+  var tbody = table.append("tbody")
+
+  var columns = ["Make", "Fuel", "EngineCylinders", "AverageHighwayMPG", "AverageCityMPG"]
+
+  thead
+    .append("tr")
+    .selectAll("th")
+    .data(columns)
+    .enter()
+    .append("th")
+    .text(function(d) {
+      return d;
+    })
+
+  var rows = tbody
+    .selectAll("tr")
+    .data(data)
+    .enter()
+    .append("tr");
+
+  var cells = rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(column) {
+                return {column: column, value: row[column]};
+            });
+        })
+        .enter()
+        .append("td")
+        .html(function(d) { return d.value; });
+
+}
+async function table2() {
+  const data = await d3.csv("https://flunky.github.io/cars2017.csv");
+  xs = d3.scaleLog().domain([10,150]).range([0,200]);
+  ys = d3.scaleLog().domain([10,150]).range([200,0]);
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,3650)")
+    .selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d,i){return xs(d.AverageCityMPG)})
+    .attr("cy", function(d,i){return ys(d.AverageHighwayMPG)} )
+    .attr("r", function(d,i){return 2})
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,3650)")
+    .call(d3.axisLeft(ys).tickValues([10, 20, 50, 100]).tickFormat(d3.format(".0s")))
+  d3.select("svg")
+     .append("g")
+     .append("text")
+     .attr("class", "axis")
+     .attr("transform","translate(70,3765)rotate(-90)")
+     .attr("text-anchor", "middle")
+     .text("Highway MPG");
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,3850)")
+    .call(d3.axisBottom(xs).tickValues([10, 20, 50, 100]).tickFormat(d3.format(".0s")))
+  d3.select("svg")
+     .append("g")
+     .append("text")
+     .attr("class", "axis")
+     .attr("transform","translate(200,3885)")
+     .attr("text-anchor", "middle")
+     .text("City MPG");
+}
+async function table3() {
+  const data = await d3.csv("https://flunky.github.io/cars2017.csv");
+  xs = d3.scaleLog().domain([10,150]).range([0,200]);
+  ys = d3.scaleLog().domain([10,150]).range([200,0]);
+  var tooltip = d3.select("#tooltip");
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,4150)")
+    .selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d,i){return xs(d.AverageCityMPG)})
+    .attr("cy", function(d,i){return ys(d.AverageHighwayMPG)} )
+    .attr("r", function(d,i){return +d.EngineCylinders + 2})
+    .on("mouseover", function(d,i) {
+      tooltip
+        .style("opacity", 1)
+        .style("left",(d3.event.pageX)+"px")
+        .style("top",(d3.event.pageY)+"px")
+        .html(d.Make + ", Cylinders = " + d.EngineCylinders + ", CityMPG = " + d.AverageCityMPG + ", HighwayMPG = " + d.AverageHighwayMPG);
+    })
+    .on("mouseout", function() { tooltip.style("opacity", 0) })
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,4150)")
+    .call(d3.axisLeft(ys).tickValues([10, 20, 50, 100]).tickFormat(d3.format(".0s")))
+  d3.select("svg")
+     .append("g")
+     .append("text")
+     .attr("class", "axis")
+     .attr("transform","translate(70,4265)rotate(-90)")
+     .attr("text-anchor", "middle")
+     .text("Highway MPG");  
+  d3.select("svg")
+    .append("g")
+    .attr("transform","translate(100,4350)")
+    .call(d3.axisBottom(xs).tickValues([10, 20, 50, 100]).tickFormat(d3.format(".0s")))
+  d3.select("svg")
+     .append("g")
+     .append("text")
+     .attr("class", "axis")
+     .attr("transform","translate(200,4385)")
+     .attr("text-anchor", "middle")
+     .text("City MPG");
+}
+table1();
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3400)")
+  .text("As can be seen, there are various makes of cars with different engines, number of")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3420)")
+  .text("cylinders, and resulting miles per gallon.")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3460)")
+  .text("An interesting question to ask is whether there are any")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3480)")
+  .text("types of cars that have an extremely high city MPG and low")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3500)")
+  .text("highway MPG, or vice versa. There surely must be a car designed")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3520)")
+  .text("to be highly optimized for one type of setting and lacking in the other.")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3560)")
+  .text("We can observe any of these counter-intuitive outliers by plotting the city MPG")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3580)")
+  .text("gainst the highway MPG for these cars. and see if any points do not fall on the line y=x.")
+table2();
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3940)")
+  .text("Almost all the points do follow a similar trend, where the city")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,3960)")
+  .text("MPG increases linearly (and at the same rate) as the highway MPG.")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,4000)")
+  .text("Do you think there is a trend between the number of engine cylinders")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,4020)")
+  .text("and the miles per gallon? Surely a car that has more engine cylinders")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,4040)")
+  .text("will have a lower MPG because there are more cylinders consuming gas")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,4080)")
+  .text("Feel free to find out yourself! (the larger circles with more cylinders")
+d3.select("svg")
+  .append("text")
+  .attr("transform","translate(25,4100)")
+  .text("would naturally probably cluster towards the origin)")
+table3();
+</script>
+</body>
+</html>
